@@ -75,9 +75,7 @@ export default function AdminLogin() {
           </button>
         </form>
         
-        <div className="mt-6 text-center text-xs text-gray-500">
-          <p>For testing: use password <span className="text-gray-400 font-mono">farhan81567</span></p>
-        </div>
+
       </div>
     </div>
   );
