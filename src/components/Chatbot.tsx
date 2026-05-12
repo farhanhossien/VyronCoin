@@ -126,9 +126,9 @@ export default function Chatbot() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.5)] border-2 border-red-400/30 text-white"
+        className="w-14 h-14 rounded-full bg-[#00bcd4] flex items-center justify-center shadow-[0_0_20px_rgba(0,188,212,0.5)] border-2 border-white/20 text-black"
       >
-        {isOpen ? <X size={28} /> : <MessageSquare size={28} />}
+        {isOpen ? <X size={28} /> : <Bot size={32} />}
       </motion.button>
     </div>
   );
