@@ -38,7 +38,11 @@ export default function Chatbot() {
       });
 
       const data = await res.json();
-      setMessages((prev) => [...prev, { role: "bot", content: data.answer || "I am processing that request." }]);
+      if (data.error) {
+        setMessages((prev) => [...prev, { role: "bot", content: `Error: ${data.error}` }]);
+      } else {
+        setMessages((prev) => [...prev, { role: "bot", content: data.answer || "I am processing that request." }]);
+      }
     } catch (error) {
       setMessages((prev) => [...prev, { role: "bot", content: "Sorry, I am having trouble connecting right now." }]);
     } finally {
