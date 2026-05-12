@@ -12,24 +12,30 @@ export async function POST(req: Request) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Using a more standard way to initialize the model
+    // Switching to the more robust gemini-1.5-flash model
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-pro" // Using gemini-pro as it's more widely compatible
+      model: "gemini-1.5-flash"
     });
 
-    const SYSTEM_PROMPT = "You are Vyron AI, the official assistant for Vyron Coin. Be helpful and futuristic.";
+    const SYSTEM_PROMPT = "You are Vyron AI, the official assistant for Vyron Coin. You are a helpful and futuristic AI. Answer the user's questions about crypto and Vyron Coin professionally.";
     
-    const result = await model.generateContent(`${SYSTEM_PROMPT}\n\nUser: ${message}`);
+    // Combining system prompt with user message for better context
+    const fullPrompt = `${SYSTEM_PROMPT}\n\nUser: ${message}\nAI:`;
+    
+    const result = await model.generateContent(fullPrompt);
     const response = await result.response;
     const answer = response.text();
 
     if (!answer) {
-      throw new Error("Empty response from Gemini");
+      throw new Error("Empty response from AI");
     }
 
     return NextResponse.json({ answer });
   } catch (error: any) {
     console.error("Chat error:", error);
-    return NextResponse.json({ error: error.message || "Something went wrong" }, { status: 500 });
+    // Return a more user-friendly error message
+    return NextResponse.json({ 
+      error: "AI is currently unavailable. Please make sure the API key is correct and try again." 
+    }, { status: 500 });
   }
 }
