@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(req: Request) {
   try {
@@ -7,23 +6,35 @@ export async function POST(req: Request) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ error: "API Key is missing in Vercel environment variables." }, { status: 500 });
+      return NextResponse.json({ error: "API Key is missing." }, { status: 500 });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Directly calling the API via fetch to ensure maximum compatibility
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: `You are Vyron AI. ${message}` }]
+        }]
+      }),
+    });
 
-    const SYSTEM_PROMPT = "You are Vyron AI, the official assistant for Vyron Coin. Be helpful.";
-    const result = await model.generateContent(`${SYSTEM_PROMPT}\n\nUser: ${message}`);
-    const response = await result.response;
-    const answer = response.text();
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message || "Gemini API Error");
+    }
+
+    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "I am processing your request.";
 
     return NextResponse.json({ answer });
   } catch (error: any) {
     console.error("Chat error:", error);
-    // Returning the actual error message to the frontend for debugging
     return NextResponse.json({ 
-      error: `Gemini Error: ${error.message || "Unknown error occurred"}` 
+      error: `Error: ${error.message}` 
     }, { status: 500 });
   }
 }
