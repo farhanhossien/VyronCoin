@@ -3,34 +3,55 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const { message } = await req.json();
-    const apiKey = process.env.GROQ_API_KEY;
+    const groqKey = process.env.GROQ_API_KEY;
+    const serperKey = process.env.SERPER_API_KEY;
 
-    if (!apiKey) {
-      return NextResponse.json({ error: "Groq API Key is missing in Vercel settings." }, { status: 500 });
+    if (!groqKey || !serperKey) {
+      return NextResponse.json({ error: "API Keys are missing in Vercel settings." }, { status: 500 });
     }
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    // Step 1: Search Google via Serper for latest info
+    const searchRes = await fetch("https://google.serper.dev/search", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        "X-API-KEY": serperKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ q: message }),
+    });
+    const searchData = await searchRes.json();
+    
+    // Get snippets from search results
+    const snippets = searchData.organic?.slice(0, 3).map((s: any) => s.snippet).join("\n") || "No recent info found.";
+
+    // Step 2: Use Groq to summarize and answer based on search results
+    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${groqKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
         messages: [
-          { role: "system", content: "You are Vyron AI, the official assistant for Vyron Coin. You are helpful, professional, and knowledgeable about blockchain and Vyron Coin. You speak both English and Bengali." },
+          { 
+            role: "system", 
+            content: `You are Vyron AI, the official assistant for Vyron Coin. 
+            Use the following latest search results to answer the user's question accurately. 
+            If the info is about current events (like politics or news), rely ONLY on the search results provided below.
+            
+            Latest Search Context:
+            ${snippets}
+            
+            Answer in a friendly and professional way in the language of the user (English or Bengali).` 
+          },
           { role: "user", content: message }
         ],
       }),
     });
 
-    const data = await response.json();
-
-    if (data.error) {
-      throw new Error(data.error.message || "Groq API Error");
-    }
-
-    const answer = data.choices?.[0]?.message?.content || "I am processing your request.";
+    const groqData = await groqRes.json();
+    const answer = groqData.choices?.[0]?.message?.content || "I couldn't process that.";
 
     return NextResponse.json({ answer });
   } catch (error: any) {
