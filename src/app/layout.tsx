@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "@/context/WalletContext";
 import { Toaster } from "react-hot-toast";
+import Chatbot from "@/components/Chatbot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -49,6 +50,7 @@ export default function RootLayout({
             }}
           />
           {children}
+          <Chatbot />
         </WalletProvider>
       </body>
     </html>
