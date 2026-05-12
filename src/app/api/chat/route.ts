@@ -7,35 +7,23 @@ export async function POST(req: Request) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ error: "Gemini API key is missing in Vercel settings" }, { status: 500 });
+      return NextResponse.json({ error: "API Key is missing in Vercel environment variables." }, { status: 500 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // Switching to the more robust gemini-1.5-flash model
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash"
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const SYSTEM_PROMPT = "You are Vyron AI, the official assistant for Vyron Coin. You are a helpful and futuristic AI. Answer the user's questions about crypto and Vyron Coin professionally.";
-    
-    // Combining system prompt with user message for better context
-    const fullPrompt = `${SYSTEM_PROMPT}\n\nUser: ${message}\nAI:`;
-    
-    const result = await model.generateContent(fullPrompt);
+    const SYSTEM_PROMPT = "You are Vyron AI, the official assistant for Vyron Coin. Be helpful.";
+    const result = await model.generateContent(`${SYSTEM_PROMPT}\n\nUser: ${message}`);
     const response = await result.response;
     const answer = response.text();
-
-    if (!answer) {
-      throw new Error("Empty response from AI");
-    }
 
     return NextResponse.json({ answer });
   } catch (error: any) {
     console.error("Chat error:", error);
-    // Return a more user-friendly error message
+    // Returning the actual error message to the frontend for debugging
     return NextResponse.json({ 
-      error: "AI is currently unavailable. Please make sure the API key is correct and try again." 
+      error: `Gemini Error: ${error.message || "Unknown error occurred"}` 
     }, { status: 500 });
   }
 }
